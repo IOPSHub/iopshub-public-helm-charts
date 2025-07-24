@@ -1,0 +1,76 @@
+{{- if .Values.cronJob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{include "base-chart.fullname" .}}
+  labels:
+    {{- include "base-chart.labels" . | nindent 4 }}
+  {{- with .Values.cronJobAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ .Values.cronJob.cron }}
+  timeZone: {{ .Values.cronJob.timeZone }}
+  startingDeadlineSeconds: {{ .Values.cronJob.startingDeadlineSeconds }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "base-chart.selectorLabels" . | nindent 12 }}
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "base-chart.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          containers:
+          - name: {{ include "base-chart.fullname" . }}
+            {{- if and .Values.appConfigmap.enabled .Values.appSecrets.enabled }}
+            envFrom:
+              - configMapRef:
+                  name: {{ include "base-chart.fullname" . }}
+              - secretRef:
+                  name: {{ include "base-chart.fullname" . }}
+            {{- else if .Values.appConfigmap.enabled }}
+            envFrom:
+              - configMapRef:
+                  name: {{ include "base-chart.fullname" . }}
+            {{- else if .Values.appSecrets.enabled }}
+            envFrom:
+              - secretRef:
+                  name: {{ include "base-chart.fullname" . }}
+            {{- end }}
+            securityContext:
+              {{- toYaml .Values.securityContext | nindent 14 }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            {{- if .Values.command }}
+            command: 
+              {{- range .Values.command }}
+                - {{ . }}
+              {{- end }}
+            {{- end }}
+            resources:
+              {{- toYaml .Values.resources | nindent 14 }}
+          restartPolicy: {{ .Values.cronJob.restartPolicy }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- tpl . $ | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

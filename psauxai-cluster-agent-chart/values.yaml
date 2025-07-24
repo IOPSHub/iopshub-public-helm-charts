@@ -1,0 +1,207 @@
+# Default values for base-chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+#  - name: nexus-registery
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations:
+  instrumentation.opentelemetry.io/inject-nodejs: "true"
+
+deploymentAnnotations:
+  []
+  #downscaler/exclude: "true"
+
+hpaAnnotations:
+  []
+  # downscaler/downtime-replicas: "1"
+  # downscaler/uptime: "Mon-Fri 09:00-20:00 Asia/Kolkata"
+
+scaledJobAnnotations:
+  autoscaling.keda.sh/paused: "false"
+
+cronJobAnnotations: []
+
+cronJob:
+  enabled: false
+  cron: '"0 6 * * *"'
+  timeZone: "Asia/Kolkata" #You can change this line with any timezone
+  startingDeadlineSeconds: 60
+  restartPolicy: "Never"
+
+jobTargetRef:
+  parallelism: 1 # [max number of desired pods](https://kubernetes.io/docs/concepts/workloads/controllers/job/#controlling-parallelism)
+  completions: 1 # [desired number of successfully finished pods](https://kubernetes.io/docs/concepts/workloads/controllers/job/#controlling-parallelism)
+  activeDeadlineSeconds: 600 #  Specifies the duration in seconds relative to the startTime that the job may be active before the system tries to terminate it; value must be positive integer
+  backoffLimit: 6 # Specifies the number of retries before marking this job failed. Defaults to 6
+
+scaledJob:
+  enabled: false
+  pollingInterval: 30 # Optional. Default: 30 seconds
+  successfulJobsHistoryLimit: 5 # Optional. Default: 100. How many completed jobs should be kept.
+  failedJobsHistoryLimit: 5 # Optional. Default: 100. How many failed jobs should be kept.
+  minReplicaCount: 0 # Optional. Default: 0
+  maxReplicaCount: 20 # Optional. Default: 100
+  rollout:
+    strategy: gradual # Optional. Default: default. Which Rollout Strategy KEDA will use.
+    propagationPolicy: foreground # Optional. Default: background. Kubernetes propagation policy for cleaning up existing jobs during rollout.
+  scalingStrategy:
+    strategy: "custom" # Optional. Default: default. Which Scaling Strategy to use.
+    customScalingQueueLengthDeduction: 1 # Optional. A parameter to optimize custom ScalingStrategy.
+    customScalingRunningJobPercentage: "0.5" # Optional. A parameter to optimize custom ScalingStrategy.
+    pendingPodConditions: # Optional. A parameter to calculate pending job count per the specified pod conditions
+      - "Ready"
+      - "PodScheduled"
+      - "AnyOtherCustomPodCondition"
+    multipleScalersCalculation: "max" # Optional. Default: max. Specifies how to calculate the target metrics when multiple scalers are defined.
+  triggers:
+    - type: cron
+      metadata:
+        # Required
+        timezone: Asia/Kolkata # The acceptable values would be a value from the IANA Time Zone Database.
+        start: 0 6 * * * # At 6:00 AM
+        end: 0 20 * * * # At 8:00 PM
+        desiredReplicas: "1"
+
+# command: [ "sh", "-c", "touch /tmp/healthy && source /vault/secrets/config && java -jar app.jar"]
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+exposes_port: false
+service:
+  type: ClusterIP
+  port: 3000
+
+probe:
+  liveness:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 3
+    timeoutSeconds: 10
+
+  readiness:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 3
+    timeoutSeconds: 10
+
+ingress:
+  enabled: false
+  className: ""
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  annotations:
+    # kubernetes.io/tls-acme: "true"
+    # This property allows for reports up to a certain size to be uploaded to SonarQube
+    nginx.ingress.kubernetes.io/proxy-body-size: "300m"
+
+    # Set the ingressClassName on the ingress record
+    kubernetes.io/ingress.class: "internal-ingress"
+
+# podDisruptionBudget:
+#   enabled: true
+#   minAvailable: "50%" # value can be either a number like 1 or percentage in double quotes like "50%"
+#   maxUnavailable: null
+
+podDisruptionBudget:
+  enabled: false
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 100m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 100Mi
+
+autoscaling:
+  enabled: false
+  # minReplicas: 2
+  # maxReplicas: 10
+  # targetCPUUtilizationPercentage: 70
+  # targetMemoryUtilizationPercentage: 80
+
+# nodeSelector:
+#   node_type: "app"
+
+# tolerations:
+#   - key: "app"
+#     operator: "Equal"
+#     value: "true"
+#     effect: "NoSchedule"
+
+tolerations:
+  - operator: "Exists"
+
+affinity: |
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+            - key: "eks.amazonaws.com/capacityType"
+              operator: In
+              values:
+                - "SPOT"
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: "app.kubernetes.io/instance"
+                operator: In
+                values:
+                  - {{include "base-chart.fullname" .}}
+          topologyKey: "kubernetes.io/hostname"
+
+## ******** Application ConfigMap **************
+## Enable/Disable configmap as per requirement
+appConfigmap:
+  enabled: true
+  data:
+    KEY1: "value1"
+  #   KEY2: "value2"
+## ******** Application Secrets ****************
+## Enable/Disable secret as per requirement
+appSecrets:
+  enabled: false
