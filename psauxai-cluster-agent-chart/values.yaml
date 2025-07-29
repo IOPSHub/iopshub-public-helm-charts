@@ -205,3 +205,11 @@ appConfigmap:
 ## Enable/Disable secret as per requirement
 appSecrets:
   enabled: false
+
+# Persistent Volume Claim configuration
+persistence:
+  enabled: true
+  mountPath: /app/sqlite3
+  storageClass: "gp3"
+  size: 5Gi
+  accessMode: ReadWriteOnce
