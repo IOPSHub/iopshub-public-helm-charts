@@ -14,7 +14,7 @@ spec:
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   strategy:
-    type: Recreate
+    type: {{ .Values.deploymentStrategy | default "Recreate" }}
   selector:
     matchLabels:
       {{- include "base-chart.selectorLabels" . | nindent 6 }}
