@@ -6,10 +6,10 @@ replicaCount: 1
 deploymentStrategy: Recreate
 
 image:
-  repository: nginx
+  repository: iopshub/psauxai-cluster-agent
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  # Override the default public image tag when pinning a release.
+  tag: latest
 
 imagePullSecrets: []
 #  - name: nexus-registery
