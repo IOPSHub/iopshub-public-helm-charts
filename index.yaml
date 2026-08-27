@@ -3,6 +3,16 @@ entries:
   psauxai-cluster-agent-chart:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2026-08-27T06:28:25.773211684Z"
+    description: A Helm chart for Kubernetes
+    digest: 3be90032b98cdeb490e2c15fb9c6c4b1225228a5ca9d804a76765895d4c5d5ec
+    name: psauxai-cluster-agent-chart
+    type: application
+    urls:
+    - https://github.com/IOPSHub/iopshub-public-helm-charts/releases/download/psauxai-cluster-agent-chart-0.1.7/psauxai-cluster-agent-chart-0.1.7.tgz
+    version: 0.1.7
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2026-08-16T06:47:20.776678917Z"
     description: A Helm chart for Kubernetes
     digest: fd639b2b417d3a6f70600a159dc9852332f09d95e36fdfebba087641e7da071d
@@ -61,4 +71,4 @@ entries:
     urls:
     - https://github.com/IOPSHub/iopshub-public-helm-charts/releases/download/psauxai-cluster-agent-chart-0.1.1/psauxai-cluster-agent-chart-0.1.1.tgz
     version: 0.1.1
-generated: "2026-08-16T06:47:20.776716044Z"
+generated: "2026-08-27T06:28:25.773247265Z"
