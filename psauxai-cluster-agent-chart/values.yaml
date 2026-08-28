@@ -7,7 +7,7 @@ deploymentStrategy: Recreate
 
 image:
   repository: iopshub/psauxai-cluster-agent
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Override the default public image tag when pinning a release.
   tag: latest
 
